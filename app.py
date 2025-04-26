@@ -4,6 +4,7 @@ import openai
 import os
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -17,7 +18,7 @@ class Question(BaseModel):
 async def ask_krishna(question: Question):
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",  # use gpt-4o-mini
+            model="gpt-4o",  # use gpt-4o
             messages=[
                 {
                     "role": "system",
@@ -35,5 +36,7 @@ async def ask_krishna(question: Question):
         return {"answer": krishna_reply}
     except openai.error.AuthenticationError:
         return {"error": "Authentication failed. Please check your API key."}
+    except openai.error.OpenAIError as e:
+        return {"error": f"OpenAI API error: {str(e)}"}
     except Exception as e:
         return {"error": str(e)}
