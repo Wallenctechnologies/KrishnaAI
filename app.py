@@ -3,6 +3,13 @@ from pydantic import BaseModel
 import openai
 import os
 from dotenv import load_dotenv
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_homepage():
+    with open("index.html", "r", encoding="utf-8") as file:
+        html_content = file.read()
+    return html_content
 
 # Load environment variables
 load_dotenv()
