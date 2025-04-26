@@ -1,3 +1,11 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # This loads your .env file, where OPENAI_API_KEY is stored
+
+# Fetch the OpenAI API Key from the environment variables
+openai.api_key = os.getenv("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")  # Use this API key for making requests
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
