@@ -1,41 +1,39 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
 import openai
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables from the .env file
+load_dotenv()
 
-# Fetch the OpenAI API key from environment variables
 openai.api_key = os.getenv("OPENAI_API_KEY")
-
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
-templates = Jinja2Templates(directory="templates")
-
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    with open("index.html", "r") as file:
-        content = file.read()
-    return HTMLResponse(content=content)
+class Question(BaseModel):
+    question: str
 
 @app.post("/ask_krishna/")
-async def ask_krishna(request: Request):
-    body = await request.json()
-    question = body.get("question", "")
-    
-    if not question:
-        return {"answer": "Please ask a question!"}
-
-    # Call OpenAI (GPT-4) here
-    response = openai.Completion.create(
-        model="gpt-4",  # Make sure your API key and model are set up
-        prompt=question,  # New format for sending the prompt
-        max_tokens=100  # You can set other parameters as needed
-    )
-    
-    answer = response.choices[0].text.strip()  # Get the answer
-    return {"answer": answer}
+async def ask_krishna(question: Question):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",  # use gpt-4o-mini
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are Krishna, a compassionate, wise, and playful teacher who answers with love, deep insight, and joy."
+                },
+                {
+                    "role": "user",
+                    "content": question.question
+                }
+            ],
+            temperature=0.7,
+            max_tokens=500,
+        )
+        krishna_reply = response["choices"][0]["message"]["content"].strip()
+        return {"answer": krishna_reply}
+    except openai.error.AuthenticationError:
+        return {"error": "Authentication failed. Please check your API key."}
+    except Exception as e:
+        return {"error": str(e)}
