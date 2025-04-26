@@ -1,0 +1,10 @@
+# Ignore environment secrets
+.env
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore other temp files
+.DS_Store
+*.log
