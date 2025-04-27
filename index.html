@@ -16,22 +16,30 @@
   <p id="answer"></p>
 
   <script>
-    const form = document.getElementById('chat-form');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const question = document.getElementById('question').value;
+  const form = document.getElementById('chat-form');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const question = document.getElementById('question').value;
 
-      const response = await fetch('/ask_krishna/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ question })
-      });
-
-      const data = await response.json();
-      document.getElementById('answer').innerText = data.answer;
+    const response = await fetch('/ask_krishna/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ question })
     });
-  </script>
+
+    const data = await response.json();
+
+    if (data.answer) {
+      document.getElementById('answer').innerText = data.answer;
+    } else if (data.error) {
+      document.getElementById('answer').innerText = "Error: " + data.error;
+    } else {
+      document.getElementById('answer').innerText = "Unknown error occurred.";
+    }
+  });
+</script>
+
 </body>
 </html>
