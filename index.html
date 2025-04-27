@@ -1,120 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Krishna AI Assistant</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      max-width: 600px; 
-      margin: 40px auto; 
-      padding: 20px; 
-      line-height: 1.6; 
-      background: url('https://path-to-your-image.jpg') no-repeat center center fixed; 
-      background-size: cover;
-      color: #333;
-    }
-    h1 { 
-      text-align: center; 
-      color: #2c3e50; 
-      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    }
-    form { 
-      display: flex; 
-      align-items: center; 
-      margin-bottom: 20px; 
-    }
-    input[type="text"] { 
-      flex: 1; 
-      padding: 10px; 
-      font-size: 1em; 
-      border: 1px solid #ccc; 
-      border-radius: 4px; 
-    }
-    button { 
-      padding: 10px 20px; 
-      font-size: 1em; 
-      margin-left: 10px; 
-      border: none; 
-      background: #4caf50; 
-      color: white; 
-      border-radius: 4px; 
-      cursor: pointer; 
-    }
-    button:hover { 
-      background: #45a049; 
-    }
-    #voice-toggle { 
-      margin-left: 10px; 
-      font-size: 0.9em; 
-    }
-    #answer { 
-      background: rgba(255, 255, 255, 0.8); 
-      padding: 15px; 
-      border-radius: 5px; 
-      border: 1px solid #ddd; 
-      min-height: 50px; 
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Krishna Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>🙏 Jai Shri Krishna! </h1>
+<body class="bg-gradient-to-br from-blue-100 to-purple-200 min-h-screen flex flex-col items-center p-4">
 
-  <form id="chat-form">
-    <input type="text" id="question" placeholder="Ask Krishna..." required />
-    <button type="submit">Ask</button>
-    <label id="voice-toggle"><input type="checkbox" id="enable-voice" checked /> Speak</label>
-  </form>
+    <div class="bg-white w-full max-w-md shadow-xl rounded-xl overflow-hidden flex flex-col flex-1">
+        <div class="bg-indigo-500 text-white text-center py-4 text-2xl font-bold">
+            🦚 Talk with Krishna
+        </div>
 
-  <h2>Answer:</h2>
-  <p id="answer"></p>
+        <div id="chat" class="flex-1 p-4 overflow-y-auto space-y-4" style="max-height: 70vh;"></div>
 
-  <!-- Flute music that plays when the page is loaded -->
-  <audio id="flute-music" autoplay loop>
-    <source src="https://path-to-your-flute-music.mp3" type="audio/mp3" />
-    Your browser does not support the audio element.
-  </audio>
+        <div class="flex p-4 border-t">
+            <input
+                id="userInput"
+                type="text"
+                placeholder="Ask Krishna something spiritual..."
+                class="flex-1 border rounded-l-lg p-2 focus:outline-none"
+                onkeydown="if(event.key === 'Enter') sendMessage()"
+            />
+            <button onclick="sendMessage()" class="bg-indigo-500 text-white px-4 rounded-r-lg hover:bg-indigo-600">
+                Send
+            </button>
+        </div>
+    </div>
 
-  <script>
-    const form = document.getElementById('chat-form');
-    const answerEl = document.getElementById('answer');
-    const voiceCheckbox = document.getElementById('enable-voice');
+    <script>
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            if (!message) return;
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const question = document.getElementById('question').value.trim();
-      if (!question) return;
-      answerEl.innerText = '... Krishna is thinking ...';
+            // Add user message to chat
+            const chatDiv = document.getElementById('chat');
+            chatDiv.innerHTML += `
+                <div class="text-right">
+                    <div class="inline-block bg-indigo-100 text-indigo-800 p-2 rounded-lg">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            chatDiv.scrollTop = chatDiv.scrollHeight;
 
-      try {
-        const response = await fetch('/ask_krishna/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question })
-        });
-        const data = await response.json();
+            // Clear input field
+            userInput.value = '';
 
-        let text = '';
-        if (data.answer) {
-          text = data.answer;
-        } else if (data.error) {
-          text = 'Error: ' + data.error;
-        } else {
-          text = 'Unknown error occurred.';
+            // Send to backend
+            try {
+                const response = await fetch('/ask_krishna/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: message })
+                });
+
+                const data = await response.json();
+                const krishnaReply = data.answer || data.error || "No reply.";
+
+                // Add Krishna's reply
+                chatDiv.innerHTML += `
+                    <div class="text-left">
+                        <div class="inline-block bg-yellow-100 text-yellow-800 p-2 rounded-lg">
+                            ${krishnaReply}
+                        </div>
+                    </div>
+                `;
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+
+            } catch (error) {
+                console.error(error);
+            }
         }
-        answerEl.innerText = text;
+    </script>
 
-        // Speak the answer if enabled
-        if (voiceCheckbox.checked && 'speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'en-US';
-          window.speechSynthesis.speak(utterance);
-        }
-      } catch (err) {
-        answerEl.innerText = 'Fetch error: ' + err.message;
-      }
-    });
-  </script>
 </body>
 </html>
