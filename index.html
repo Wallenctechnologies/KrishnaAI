@@ -103,10 +103,10 @@
 
     // Play music only when user clicks Play button
     const playMusicButton = document.getElementById('playMusicButton');
+    const music = document.getElementById('bgMusic');
     playMusicButton.addEventListener('click', () => {
-      const music = document.getElementById('bgMusic');
       music.muted = false; // Unmute
-      music.play();
+      music.play(); // Start playing music
       playMusicButton.style.display = 'none'; // Hide button after playing
     });
   </script>
