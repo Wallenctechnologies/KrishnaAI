@@ -1,8 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Krishna AI Assistant</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; line-height: 1.6; background: #f9f9f9; color: #333; }
+    h1 { text-align: center; color: #2c3e50; }
+    form { display: flex; align-items: center; margin-bottom: 20px; }
+    input[type="text"] { flex: 1; padding: 10px; font-size: 1em; border: 1px solid #ccc; border-radius: 4px; }
+    button { padding: 10px 20px; font-size: 1em; margin-left: 10px; border: none; background: #4caf50; color: white; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #45a049; }
+    #voice-toggle { margin-left: 10px; font-size: 0.9em; }
+    #answer { background: #fff; padding: 15px; border-radius: 5px; border: 1px solid #ddd; min-height: 50px; }
+  </style>
 </head>
 <body>
   <h1>🙏 Jai Shri Krishna! 🙏</h1>
@@ -10,36 +21,51 @@
   <form id="chat-form">
     <input type="text" id="question" placeholder="Ask Krishna..." required />
     <button type="submit">Ask</button>
+    <label id="voice-toggle"><input type="checkbox" id="enable-voice" checked /> Speak</label>
   </form>
 
   <h2>Answer:</h2>
   <p id="answer"></p>
 
   <script>
-  const form = document.getElementById('chat-form');
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const question = document.getElementById('question').value;
+    const form = document.getElementById('chat-form');
+    const answerEl = document.getElementById('answer');
+    const voiceCheckbox = document.getElementById('enable-voice');
 
-    const response = await fetch('/ask_krishna/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ question })
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const question = document.getElementById('question').value.trim();
+      if (!question) return;
+      answerEl.innerText = '... Krishna is thinking ...';
+
+      try {
+        const response = await fetch('/ask_krishna/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+        const data = await response.json();
+
+        let text = '';
+        if (data.answer) {
+          text = data.answer;
+        } else if (data.error) {
+          text = 'Error: ' + data.error;
+        } else {
+          text = 'Unknown error occurred.';
+        }
+        answerEl.innerText = text;
+
+        // Speak the answer if enabled
+        if (voiceCheckbox.checked && 'speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'en-US';
+          window.speechSynthesis.speak(utterance);
+        }
+      } catch (err) {
+        answerEl.innerText = 'Fetch error: ' + err.message;
+      }
     });
-
-    const data = await response.json();
-
-    if (data.answer) {
-      document.getElementById('answer').innerText = data.answer;
-    } else if (data.error) {
-      document.getElementById('answer').innerText = "Error: " + data.error;
-    } else {
-      document.getElementById('answer').innerText = "Unknown error occurred.";
-    }
-  });
-</script>
-
+  </script>
 </body>
 </html>
