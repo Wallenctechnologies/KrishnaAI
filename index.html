@@ -1,111 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Krishna Chat</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Krishna Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-blue-100 to-purple-200 min-h-screen flex flex-col items-center p-4 relative">
 
-    <!-- Background flute music (hidden player) -->
-    <audio id="bgMusic" src="https://assets.mixkit.co/music/preview/mixkit-flute-relaxation-1084.mp3" autoplay loop hidden></audio>
+  <!-- Hidden Flute Audio -->
+  <audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/10/24/audio_c2c536c601.mp3?filename=divine-flute-123931.mp3" loop hidden></audio>
 
-    <div class="bg-white w-full max-w-md shadow-xl rounded-xl overflow-hidden flex flex-col flex-1">
-        <div class="bg-indigo-500 text-white text-center py-4 text-2xl font-bold flex items-center justify-center gap-2">
-            🦚 Talk with Krishna
-            <button onclick="toggleSpeech()" id="speakerButton" class="ml-2 text-white">
-                🔈
-            </button>
-        </div>
+  <!-- Play Flute Music Button -->
+  <button id="playMusicButton" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-full shadow-lg hover:bg-green-600">
+    🎵 Play Flute Music
+  </button>
 
-        <div id="chat" class="flex-1 p-4 overflow-y-auto space-y-4" style="max-height: 70vh;"></div>
-
-        <div class="flex p-4 border-t">
-            <input
-                id="userInput"
-                type="text"
-                placeholder="Ask Krishna something spiritual..."
-                class="flex-1 border rounded-l-lg p-2 focus:outline-none"
-                onkeydown="if(event.key === 'Enter') sendMessage()"
-            />
-            <button onclick="sendMessage()" class="bg-indigo-500 text-white px-4 rounded-r-lg hover:bg-indigo-600">
-                Send
-            </button>
-        </div>
+  <div class="bg-white w-full max-w-md shadow-xl rounded-xl overflow-hidden flex flex-col flex-1 mt-16">
+    <div class="bg-indigo-500 text-white text-center py-4 text-2xl font-bold flex items-center justify-center gap-2">
+      🦚 Talk with Krishna
+      <button onclick="toggleSpeech()" id="speakerButton" class="ml-2 text-white">
+        🔈
+      </button>
     </div>
 
-    <script>
-        let speakingEnabled = false; // Speech OFF by default
+    <div id="chat" class="flex-1 p-4 overflow-y-auto space-y-4" style="max-height: 70vh;"></div>
 
-        function toggleSpeech() {
-            speakingEnabled = !speakingEnabled;
-            const speakerButton = document.getElementById('speakerButton');
-            speakerButton.innerText = speakingEnabled ? '🔊' : '🔈'; // Change icon
+    <div class="flex p-4 border-t">
+      <input
+        id="userInput"
+        type="text"
+        placeholder="Ask Krishna something spiritual..."
+        class="flex-1 border rounded-l-lg p-2 focus:outline-none"
+        onkeydown="if(event.key === 'Enter') sendMessage()"
+      />
+      <button onclick="sendMessage()" class="bg-indigo-500 text-white px-4 rounded-r-lg hover:bg-indigo-600">
+        Send
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let speakingEnabled = false;
+
+    function toggleSpeech() {
+      speakingEnabled = !speakingEnabled;
+      const speakerButton = document.getElementById('speakerButton');
+      speakerButton.innerText = speakingEnabled ? '🔊' : '🔈';
+    }
+
+    async function sendMessage() {
+      const userInput = document.getElementById('userInput');
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      const chatDiv = document.getElementById('chat');
+      chatDiv.innerHTML += `
+        <div class="text-right">
+          <div class="inline-block bg-indigo-100 text-indigo-800 p-2 rounded-lg">
+            ${message}
+          </div>
+        </div>
+      `;
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+
+      userInput.value = '';
+
+      try {
+        const response = await fetch('/ask_krishna/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ question: message })
+        });
+
+        const data = await response.json();
+        const krishnaReply = data.answer || data.error || "No reply.";
+
+        chatDiv.innerHTML += `
+          <div class="text-left">
+            <div class="inline-block bg-yellow-100 text-yellow-800 p-2 rounded-lg">
+              ${krishnaReply}
+            </div>
+          </div>
+        `;
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+
+        if (speakingEnabled) {
+          speak(krishnaReply);
         }
+      } catch (error) {
+        console.error(error);
+      }
+    }
 
-        async function sendMessage() {
-            const userInput = document.getElementById('userInput');
-            const message = userInput.value.trim();
-            if (!message) return;
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9;
+      speechSynthesis.speak(utterance);
+    }
 
-            const chatDiv = document.getElementById('chat');
-            chatDiv.innerHTML += `
-                <div class="text-right">
-                    <div class="inline-block bg-indigo-100 text-indigo-800 p-2 rounded-lg">
-                        ${message}
-                    </div>
-                </div>
-            `;
-            chatDiv.scrollTop = chatDiv.scrollHeight;
-
-            userInput.value = '';
-
-            try {
-                const response = await fetch('/ask_krishna/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ question: message })
-                });
-
-                const data = await response.json();
-                const krishnaReply = data.answer || data.error || "No reply.";
-
-                chatDiv.innerHTML += `
-                    <div class="text-left">
-                        <div class="inline-block bg-yellow-100 text-yellow-800 p-2 rounded-lg">
-                            ${krishnaReply}
-                        </div>
-                    </div>
-                `;
-                chatDiv.scrollTop = chatDiv.scrollHeight;
-
-                // If speaking is enabled, use Text-to-Speech
-                if (speakingEnabled) {
-                    speak(krishnaReply);
-                }
-
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        function speak(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US'; // you can choose other languages too
-            utterance.rate = 0.9; // slow down to sound peaceful
-            speechSynthesis.speak(utterance);
-        }
-
-        // Make sure user taps page once to allow autoplay music (due to browser restrictions)
-        document.body.addEventListener('click', () => {
-            const music = document.getElementById('bgMusic');
-            if (music.paused) {
-                music.play();
-            }
-        }, { once: true });
-    </script>
+    // Play music only when user clicks Play button
+    const playMusicButton = document.getElementById('playMusicButton');
+    playMusicButton.addEventListener('click', () => {
+      const music = document.getElementById('bgMusic');
+      music.muted = false; // Unmute
+      music.play();
+      playMusicButton.style.display = 'none'; // Hide button after playing
+    });
+  </script>
 
 </body>
 </html>
